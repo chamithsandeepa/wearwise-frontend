@@ -1,12 +1,75 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [currentState, setCurrentState] = useState("Sign Up");
+  const navigate = useNavigate();
 
+  // Store form input values
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // Handle form submission
   // not reloading the page on form submission
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+
+    if (currentState === "Sign Up") {
+      try {
+        const response = await axios.post(
+          "http://localhost:8080/api/v1/users/register",
+          {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          }
+        );
+        console.log("User registered:", response.data);
+        alert("Registration successful!");
+        setCurrentState("Login");
+      } catch (error) {
+        console.error("Registration failed:", error);
+        alert("Registration failed. Check the console for details.");
+      }
+    } else if (currentState === "Login") {
+      try {
+        const response = await axios.post(
+          "http://localhost:8080/api/v1/users/login",
+          {
+            email: formData.email,
+            password: formData.password,
+          }
+        );
+        console.log("Login successful:", response.data);
+        alert("Login successful!");
+        navigate("/"); // Redirect to homepage or dashboard
+
+        // You can optionally store the user data in localStorage
+        // localStorage.setItem("user", JSON.stringify(response.data));
+        // Navigate to dashboard or homepage if needed
+      } catch (error) {
+        console.error("Login failed:", error);
+        if (error.response && error.response.status === 401) {
+          alert("Invalid email or password.");
+        } else {
+          alert("Login failed. Check the console for details.");
+        }
+      }
+    }
   };
+  
 
   return (
     <form
@@ -22,6 +85,9 @@ const Login = () => {
       ) : (
         <input
           type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-800"
           placeholder="Name"
           required
@@ -29,12 +95,18 @@ const Login = () => {
       )}
       <input
         type="email"
+        name="email"
+        value={formData.email}
+        onChange={handleChange}
         className="w-full px-3 py-2 border border-gray-800"
         placeholder="Email"
         required
       />
       <input
         type="password"
+        name="password"
+        value={formData.password}
+        onChange={handleChange}
         className="w-full px-3 py-2 border border-gray-800"
         placeholder="Password"
         required
